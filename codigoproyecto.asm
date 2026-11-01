@@ -1,222 +1,236 @@
 
-.model small  
+.model small
 .stack 100h
 
+.DATA
 
-.data
- 
-    msgError db 10,13 ,"ERROR, solo se permiten NUMEROS del 1-4","$" 
-    msgbienvenida1 db 10,13 ,'====================================================================', 
-                   db 10,13 ,'           UNIVERSIDAD MARIANO GÁLVEZ - ARQUITECTURA 8086'
-                   db 10,13 ,'====================================================================',
-                   db 10,13 , '1. Clasificador de Caracteres'
-                   db 10,13 , '2. Generador de Código Hamming (10 bits -> 14 bits)'
-                   db 10,13 , '3. Conversor de Bases Numéricas (Decimal a Binario/Hex)'
-                   db 10,13 , '4. Juego Interactivo de Aritmética por Mouse (3 Niveles / 12 Preguntas)'
-                   db 10,13 , '5. Salir del Sistema',
-                   db 10,13 ,'====================================================================',"$" 
-    opcion2 db 10,13, " Ingrese una opción [1-5]:", "$"  
-    
-    bienvenida1 db 10,13 ,"Clasificador de caracteres: ","$" 
-    bienvenida2 db 10,13 ,"Generador de Código Hamming: ","$"
-    bienvenida3 db 10,13 ,"Conversor de Bases Numéricas: ","$"
-    bienvenida4 db 10,13 ,"Juego Interactivo de Aritmética por Mouse (3 Niveles / 12 Preguntas)","$" 
-    bienvenida5 db 10,13 ,"Salir del Sistema ","$"  
-    
- 
-    msgcontinuar db 10,13 ,"Desea continuar? S/N","$"   
-    
-    
-    ; --- BUFFERS EN MEMORIA 
-    ;BUF_MAYUS   DB 50 DUP(0)
-    ;BUF_MINUS   DB 50 DUP(0)
-    ;BUF_NUMS    DB 50 DUP(0)
-    ;BUF_ESPEC   DB 50 DUP(0)
+    msgError db 13,10,"ERROR, solo se permiten NUMEROS del 1-5","$"
+    msgErrorSN db 13,10,"Ingrese S o N solamente","$"
 
-    ; --- CONTADORES ---
-    ;CANT_MAYUS  DB 0
-    ;CANT_MINUS  DB 0
-    ;CANT_NUMS   DB 0
-    ;CANT_ESPEC  DB 0
-    
-    
-.code 
+    msgbienvenida1 db 13,10,'====================================================================',13,10
+                   db '           UNIVERSIDAD MARIANO GALVEZ - ARQUITECTURA 8086',13,10
+                   db '====================================================================',13,10
+                   db '1. Clasificador de Caracteres',13,10
+                   db '2. Generador de Codigo Hamming (10 bits -> 14 bits)',13,10
+                   db '3. Conversor de Bases Numericas (Decimal a Binario/Hex)',13,10
+                   db '4. Juego Interactivo de Aritmetica por Mouse (3 Niveles / 12 Preguntas)',13,10
+                   db '5. Salir del Sistema',13,10
+                   db '====================================================================','$'
+
+    opcionM db 13,10,"Ingrese una opcion [1-5]: $"
+
+    bienvenida1 db 13,10,"Clasificador de caracteres: $"
+    bienvenida2 db 13,10,"Generador de Codigo Hamming: $"
+    bienvenida3 db 13,10,"Conversor de Bases Numericas: $"
+    bienvenida4 db 13,10,"Juego Interactivo de Aritmetica por Mouse (3 Niveles / 12 Preguntas): $"
+
+    msgcontinuar db 13,10,"Desea continuar? S/N: $"
+
+    opcion db ?
+
+.CODE
+
+inicio proc
 
     mov ax,@data
-    mov ds,ax    
-    
-INICIO_PROGRAMA:
-    
-    ;MOV CANT_MAYUS, 0
-    ;MOV CANT_MINUS, 0
-    ;MOV CANT_NUMS, 0
-    ;MOV CANT_ESPEC, 0
+    mov ds,ax
 
-    ;MOV AX, 0003h
-    ;INT 10h                      
+menu_principal:
 
-    ;LEA DX, MSJ_TITULO
-    ;MOV AH, 09h
-    ;INT 21h
-    
-    
-    ;LEA DX, MSJ_PEDIR
-    ;MOV AH, 09h
-    ;INT 21h     
-    
-sol_Dato: 
-        MOV ah, 00h
-        MOV al, 03h
-        INT 10h
-      
+    call mostrar_menu
+    call leer_opcion
+    call validar_opcion
+
+    cmp opcion,35h
+    je salir
+
+    call mostrar_modulo
+
+repetir_modulo:
+
+    call preguntar_continuar
+
+    cmp al,53h
+    je mostrar_otro
+
+    cmp al,73h
+    je mostrar_otro
+
+    jmp menu_principal
+
+mostrar_otro:
+
+    call mostrar_modulo
+    jmp repetir_modulo
+
+inicio endp
+
+
+
+mostrar_menu proc
+             
+             
+    ;para limpiar la pantalla          
+    mov ah,00h  ;para acceder a video
+    mov al,03h
+    int 10h
+
     lea dx,msgbienvenida1
-    mov ah,9
+    mov ah,09h
     int 21h
-    
-    lea dx,opcion2
-    mov ah,9
+
+    lea dx,opcionM
+    mov ah,09h
     int 21h
-    
-    mov ah,1
-    int 21h 
-    
-    mov bl,al  
-    
+
+    ret
+
+mostrar_menu endp
+
+
+leer_opcion proc
+
+    mov ah,01h
+    int 21h
+
+    mov opcion,al
+
+    ret
+
+leer_opcion endp
+
+
+
+validar_opcion proc
+
+validar:
+
+    mov bl,opcion
+
     cmp bl,31h
-    jb error
-    
+    jb error_opcion
+
     cmp bl,35h
-    ja error
-    
-    case_menu:
-    
-    cmp bl,31h 
-        MOV ah, 00h
-        MOV al, 03h
-        INT 10h
-    je bienvenidas1 
-    
-    cmp bl,32h 
-        MOV ah, 00h
-        MOV al, 03h
-        INT 10h
-    je bienvenidas2
-    
-    cmp bl,33h
-        MOV ah, 00h
-        MOV al, 03h
-        INT 10h
-    je bienvenidas3 
-    
-    cmp bl,34h 
-        MOV ah, 00h
-        MOV al, 03h
-        INT 10h
-    je bienvenidas4
-    
-     
-     
-    error:
-    lea dx, msgError
-    mov ah,9
+    ja error_opcion
+
+    ret
+
+error_opcion:
+
+    lea dx,msgError
+    mov ah,09h
     int 21h
-    
-    jmp sol_Dato  
-    
-    bienvenidas1:
-    lea dx, bienvenida1
-    mov ah,9
-    int 21h 
-    jmp continuar1
-    
-    bienvenidas2:
-    lea dx, bienvenida2
-    mov ah,9
-    int 21h 
-    jmp continuar2
-    
-    bienvenidas3:
+
+    lea dx,opcionM
+    mov ah,09h
+    int 21h
+
+    call leer_opcion
+
+    jmp validar
+
+validar_opcion endp
+
+
+mostrar_modulo proc
+     
+     ;limpio pantalla 
+    mov ah,00h
+    mov al,03h
+    int 10h
+
+    cmp opcion,31h
+    je modulo1
+
+    cmp opcion,32h
+    je modulo2
+
+    cmp opcion,33h
+    je modulo3
+
+    cmp opcion,34h
+    je modulo4
+
+    ret
+
+modulo1:  
+;aqui voy a tocar yo para lo de la clasificacion de numeros 
+
+    lea dx,bienvenida1
+    mov ah,09h
+    int 21h
+
+    ret
+
+modulo2:
+ ;aqui tambien yo para hamming 
+    lea dx,bienvenida2
+    mov ah,09h
+    int 21h
+
+    ret
+
+modulo3:
+      ;aqui tu para el converor se bases numericas
     lea dx,bienvenida3
-    mov ah,9
+    mov ah,09h
     int 21h
-    jmp continuar3
-    
-    bienvenidas4:
-    lea dx, bienvenida4
-    mov ah,9
+
+    ret
+
+modulo4:
+      ;entre los dos el juego 
+    lea dx,bienvenida4
+    mov ah,09h
     int 21h
-    jmp continuar4
-    
-    continuar1:
-    lea dx, msgcontinuar
-    mov ah,9
+
+    ret
+
+mostrar_modulo endp
+
+
+preguntar_continuar proc
+
+preguntar:
+
+    lea dx,msgcontinuar
+    mov ah,09h
     int 21h
-     
-    mov ah,1
+
+    mov ah,01h
     int 21h
-    
-    mov bl,al
-    
-    cmp bl, 73H
-    JZ bienvenidas1 
-    cmp bl,6EH 
-    JZ sol_Dato
-    
-    continuar2:
-    lea dx, msgcontinuar
-    mov ah,9
+      
+      ;valido todos los ASCII posibles de la s y n 
+    cmp al,53h
+    je respuesta_valida
+
+    cmp al,73h
+    je respuesta_valida
+
+    cmp al,4Eh
+    je respuesta_valida
+
+    cmp al,6Eh
+    je respuesta_valida
+
+    lea dx,msgErrorSN
+    mov ah,09h
     int 21h
-    JNZ salir
-     
-    mov ah,1
+
+    jmp preguntar
+
+respuesta_valida:
+
+    ret
+
+preguntar_continuar endp
+
+
+salir proc
+
+    mov ah,4Ch
     int 21h
-    
-    mov bl,al
-    
-    cmp bl, 73H
-    JZ bienvenidas2
-    cmp bl,6EH 
-    JZ sol_Dato
-    
-    continuar3:
-    lea dx, msgcontinuar
-    mov ah,9
-    int 21h
-     
-    mov ah,1
-    int 21h
-    
-    mov bl,al
-    
-    cmp bl, 73H
-    JZ bienvenidas3
-    cmp bl,6EH 
-    JZ sol_Dato
-    
-    
-    
-    continuar4:
-    lea dx, msgcontinuar
-    mov ah,9
-    int 21h
-     
-    mov ah,1
-    int 21h
-    
-    mov bl,al
-    
-    cmp bl, 73H
-    JZ bienvenidas4 
-     
-    
-    cmp bl,6EH 
-    JZ sol_Dato 
-    
-    
-    salir:
-    mov ah, 4ch
-    int 21h
-    
-    
-    
-    
+
+salir endp
+
+endp inicio
