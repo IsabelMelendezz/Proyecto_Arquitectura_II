@@ -1,8 +1,11 @@
-
 .model small
 .stack 100h
 
 .DATA
+
+    ;----------------------------------------
+    ; MENSAJES DEL MENU PRINCIPAL
+    ;----------------------------------------
 
     msgError db 13,10,"ERROR, solo se permiten NUMEROS del 1-5","$"
     msgErrorSN db 13,10,"Ingrese S o N solamente","$"
@@ -19,16 +22,53 @@
 
     opcionM db 13,10,"Ingrese una opcion [1-5]: $"
 
-    bienvenida1 db 13,10,"Clasificador de caracteres: $"
     bienvenida2 db 13,10,"Generador de Codigo Hamming: $"
     bienvenida3 db 13,10,"Conversor de Bases Numericas: $"
-    bienvenida4 db 13,10,"Juego Interactivo de Aritmetica por Mouse (3 Niveles / 12 Preguntas): $"
+    bienvenida4 db 13,10,"Juego Interactivo de Aritmetica por Mouse: $"
 
     msgcontinuar db 13,10,"Desea continuar? S/N: $"
 
     opcion db ?
 
+    ;----------------------------------------
+    ; VARIABLES DEL MODULO 1
+    ; CLASIFICADOR DE CARACTERES
+    ;----------------------------------------
+
+    MSJ_TITULO DB 13,10,'==================================================',13,10
+               DB '             CLASIFICADOR DE CARACTERES',13,10
+               DB '==================================================$'
+
+    MSJ_PEDIR DB 13,10,'Ingrese exactamente 19 caracteres: $'
+
+    MSJ_RESULT DB 13,10,13,10,'--- RESUMEN DE CLASIFICACION ---$'
+
+    MSJ_MAYUS DB 13,10,13,10,'1. MAYUSCULAS [Total: $'
+    MSJ_MINUS DB 13,10,13,10,'2. MINUSCULAS [Total: $'
+    MSJ_NUMS DB 13,10,13,10,'3. NUMEROS    [Total: $'
+    MSJ_ESPEC DB 13,10,13,10,'4. ESPECIALES [Total: $'
+
+    MSJ_LISTA DB ']: $'
+    MSJ_VACIO DB 'Ninguno$'
+
+    ;para pruebas le deje 19 pero deberian de ser 50
+    BUF_TODO  DB 19 DUP(0)
+
+
+    BUF_MAYUS DB 40 DUP('$')
+    BUF_MINUS DB 40 DUP('$')
+    BUF_NUMS  DB 40 DUP('$')
+    BUF_ESPEC DB 40 DUP('$')
+
+    CANT_MAYUS DB 0
+    CANT_MINUS DB 0
+    CANT_NUMS DB 0
+    CANT_ESPEC DB 0
+
+
 .CODE
+
+
 
 inicio proc
 
@@ -51,14 +91,14 @@ repetir_modulo:
     call preguntar_continuar
 
     cmp al,53h
-    je mostrar_otro
+    je repetir
 
     cmp al,73h
-    je mostrar_otro
+    je repetir
 
     jmp menu_principal
 
-mostrar_otro:
+repetir:
 
     call mostrar_modulo
     jmp repetir_modulo
@@ -66,12 +106,9 @@ mostrar_otro:
 inicio endp
 
 
-
 mostrar_menu proc
-             
-             
-    ;para limpiar la pantalla          
-    mov ah,00h  ;para acceder a video
+
+    mov ah,00h
     mov al,03h
     int 10h
 
@@ -88,6 +125,9 @@ mostrar_menu proc
 mostrar_menu endp
 
 
+
+; LEER OPCION
+
 leer_opcion proc
 
     mov ah,01h
@@ -99,6 +139,8 @@ leer_opcion proc
 
 leer_opcion endp
 
+
+; VALIDAR OPCION
 
 
 validar_opcion proc
@@ -132,9 +174,12 @@ error_opcion:
 validar_opcion endp
 
 
+
+; ACA ES PARA MOSTRAR Y EJECUTAR MODULO Y VALIDO
+
+
 mostrar_modulo proc
-     
-     ;limpio pantalla 
+
     mov ah,00h
     mov al,03h
     int 10h
@@ -153,40 +198,267 @@ mostrar_modulo proc
 
     ret
 
-modulo1:  
-;aqui voy a tocar yo para lo de la clasificacion de numeros 
+modulo1:
 
-    lea dx,bienvenida1
-    mov ah,09h
-    int 21h
-
+    call clasificador
     ret
 
 modulo2:
- ;aqui tambien yo para hamming 
+    ;aqui iria el call a hamming mio 
     lea dx,bienvenida2
     mov ah,09h
     int 21h
-
     ret
 
 modulo3:
-      ;aqui tu para el converor se bases numericas
+     ;aqui iria el call al conversor tuyo 
     lea dx,bienvenida3
     mov ah,09h
     int 21h
-
     ret
 
 modulo4:
-      ;entre los dos el juego 
+        ;call juego entre los 2
     lea dx,bienvenida4
+    mov ah,09h
+    int 21h
+    ret
+
+mostrar_modulo endp
+
+
+
+; MODULO 1 - CLASIFICADOR DE CARACTERES
+
+
+clasificador proc
+
+    ; REINICIAR CONTADORES
+
+    mov CANT_MAYUS,0
+    mov CANT_MINUS,0
+    mov CANT_NUMS,0
+    mov CANT_ESPEC,0
+
+    ; MOSTRAR TITULO
+
+    lea dx,MSJ_TITULO
+    mov ah,09h
+    int 21h
+
+    lea dx,MSJ_PEDIR
+    mov ah,09h
+    int 21h
+
+
+    mov si,0
+    mov cx,19
+
+CAPTURA:
+
+    mov ah,01h
+    int 21h
+
+    mov BUF_TODO[si],al
+
+    inc si
+    dec cx
+    jnz CAPTURA
+
+    mov si,0
+    mov cx,19
+
+CLASIFICAR:
+
+    mov bl,BUF_TODO[si]
+
+    ; MAYUSCULAS
+
+    cmp bl,41h
+    jb  ES_MINUS
+
+    cmp bl,5Ah
+    ja  ES_MINUS
+
+    mov al,CANT_MAYUS
+    mov ah,0
+    mov di,ax
+    add di,di                    
+
+    mov BUF_MAYUS[di],bl
+    mov BUF_MAYUS[di+1],' '
+
+    inc CANT_MAYUS
+    jmp SIGUIENTE
+
+ES_MINUS:
+
+    ; MINUSCULAS
+
+    cmp bl,61h
+    jb  ES_NUM
+
+    cmp bl,7Ah
+    ja  ES_NUM
+
+    mov al,CANT_MINUS
+    mov ah,0
+    mov di,ax
+    add di,di
+
+    mov BUF_MINUS[di],bl
+    mov BUF_MINUS[di+1],' '
+
+    inc CANT_MINUS
+    jmp SIGUIENTE
+
+ES_NUM:
+
+    ; NUMEROS
+
+    cmp bl,30h
+    jb  ES_ESPEC
+
+    cmp bl,39h
+    ja  ES_ESPEC
+
+    mov al,CANT_NUMS
+    mov ah,0
+    mov di,ax
+    add di,di
+
+    mov BUF_NUMS[di],bl
+    mov BUF_NUMS[di+1],' '
+
+    inc CANT_NUMS
+    jmp SIGUIENTE
+
+ES_ESPEC:
+
+    ; ESPECIALES
+
+    mov al,CANT_ESPEC
+    mov ah,0
+    mov di,ax
+    add di,di
+
+    mov BUF_ESPEC[di],bl
+    mov BUF_ESPEC[di+1],' '
+
+    inc CANT_ESPEC
+
+SIGUIENTE:
+
+    inc si
+    dec cx
+    jnz CLASIFICAR
+
+
+    mov al,CANT_MAYUS
+    mov ah,0
+    mov di,ax
+    add di,di
+    mov BUF_MAYUS[di],'$'
+
+    mov al,CANT_MINUS
+    mov ah,0
+    mov di,ax
+    add di,di
+    mov BUF_MINUS[di],'$'
+
+    mov al,CANT_NUMS
+    mov ah,0
+    mov di,ax
+    add di,di
+    mov BUF_NUMS[di],'$'
+
+    mov al,CANT_ESPEC
+    mov ah,0
+    mov di,ax
+    add di,di
+    mov BUF_ESPEC[di],'$'
+
+
+    lea dx,MSJ_RESULT
+    mov ah,09h
+    int 21h
+
+    lea dx,MSJ_MAYUS
+    lea si,BUF_MAYUS
+    mov al,CANT_MAYUS
+    call imprimir_categoria
+
+    lea dx,MSJ_MINUS
+    lea si,BUF_MINUS
+    mov al,CANT_MINUS
+    call imprimir_categoria
+
+    lea dx,MSJ_NUMS
+    lea si,BUF_NUMS
+    mov al,CANT_NUMS
+    call imprimir_categoria
+
+    lea dx,MSJ_ESPEC
+    lea si,BUF_ESPEC
+    mov al,CANT_ESPEC
+    call imprimir_categoria
+
+    ret
+
+clasificador endp
+
+
+imprimir_categoria proc
+
+    mov cl,al                    
+
+    mov ah,09h
+    int 21h                    
+
+    mov al,cl
+    mov ah,0
+    mov bl,10
+    div bl                       
+
+    mov bh,ah
+
+    cmp al,1
+    jb  UNIDAD
+
+    add al,30h
+    mov dl,al
+    mov ah,02h
+    int 21h
+
+UNIDAD:
+
+    mov dl,bh
+    add dl,30h
+    mov ah,02h
+    int 21h
+
+    lea dx,MSJ_LISTA
+    mov ah,09h
+    int 21h
+
+    cmp cl,0
+    ja  HAY_DATOS
+
+    lea dx,MSJ_VACIO
+    jmp IMPRIMIR
+
+HAY_DATOS:
+
+    mov dx,si                  
+
+IMPRIMIR:
+
     mov ah,09h
     int 21h
 
     ret
 
-mostrar_modulo endp
+imprimir_categoria endp
 
 
 preguntar_continuar proc
@@ -199,8 +471,7 @@ preguntar:
 
     mov ah,01h
     int 21h
-      
-      ;valido todos los ASCII posibles de la s y n 
+
     cmp al,53h
     je respuesta_valida
 
@@ -233,4 +504,4 @@ salir proc
 
 salir endp
 
-endp inicio
+END inicio
