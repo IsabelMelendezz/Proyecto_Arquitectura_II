@@ -63,7 +63,23 @@
     CANT_MAYUS DB 0
     CANT_MINUS DB 0
     CANT_NUMS DB 0
-    CANT_ESPEC DB 0
+    CANT_ESPEC DB 0   
+    
+     
+    ;----------------------------------------
+    ; VARIABLES DEL MODULO 3
+    ; Conversor de Bases Numéricas
+    ;----------------------------------------   
+    msgOpc3Titulo DB 10,13,'==================================================',10,13
+                  DB       '             CONVERSOR DE BASES NUMERICAS',10,13
+                  DB       '==================================================$'
+    msgOpc3Ingreso  DB 10,13,"Ingrese un decimal de 0 a 255: $"
+    msgOpc3Binario  DB 10,13, "Binario de 8 bits: $"  
+    msgOpc3Hexa     DB 10,13,'Hexadecimal (2 digitos): $'
+    msgOpc3Error    DB 10,13, "Solo se permite ingresar numeros del 0 al 255 $"
+    VectorHexaDigitos DB  '0123456789ABCDEF'
+    numero       DB 0  
+    Hexa         DB 0 
 
 
 .CODE
@@ -212,9 +228,7 @@ modulo2:
 
 modulo3:
      ;aqui iria el call al conversor tuyo 
-    lea dx,bienvenida3
-    mov ah,09h
-    int 21h
+    call convertidor
     ret
 
 modulo4:
@@ -461,6 +475,146 @@ IMPRIMIR:
 imprimir_categoria endp
 
 
+
+
+
+;------- MODULO 3 -----------------------------------------------------------------------------------
+
+
+
+
+convertidor proc
+ 
+    ; MOSTRAR TITULO
+ 
+    lea dx,msgOpc3Titulo
+    mov ah,09h
+    int 21h
+ 
+op3_pedir:
+ 
+    lea dx,msgOpc3Ingreso
+    mov ah,09h
+    int 21h
+ 
+    xor bx,bx               ;bx para acumular el numero
+    xor si,si               ;si para los digitos que lee
+ 
+op3_leer:
+ 
+    mov ah,01h
+    int 21h
+ 
+    cmp al,13               ; Enter
+    je  op3_fin_lectura
+ 
+    cmp al,'0'
+    jb  op3_error
+    cmp al,'9'
+    ja  op3_error
+ 
+    sub al,30h              ; ASCII a valor
+    xor ah,ah
+    mov cx,ax               ; cx para el nuevo digito
+ 
+    mov ax,bx               ; ax = acumulado * 10 + digito
+    mov dx,10
+    mul dx
+    add ax,cx
+ 
+    cmp ax,255              ; validar rango 0-255
+    ja  op3_error
+ 
+    mov bx,ax
+    inc si
+ 
+    cmp si,3                ; maximo 3 digitos
+    jb  op3_leer
+ 
+op3_fin_lectura:
+ 
+    cmp si,0                ; si no escribio nada, error
+    je  op3_error
+ 
+    mov numero,bl           ; guardar el valor (0-255 cabe en 8 bits)
+ 
+    ;---------------- BINARIO (8 bits) ----------------
+ 
+    lea dx,msgOpc3Binario
+    mov ah,09h
+    int 21h
+ 
+    mov bl,numero
+    mov cx,8
+ 
+op3_bits:
+ 
+    shl bl,1                ; el bit sale hacia el carry
+    jc  op3_uno
+    mov dl,'0'
+    jmp op3_imprimir_bit
+ 
+op3_uno:
+ 
+    mov dl,'1'
+ 
+op3_imprimir_bit:
+ 
+    mov ah,02h
+    int 21h
+    loop op3_bits
+ 
+    ;---------------- HEXADECIMAL (2 digitos) ----------------
+ 
+    lea dx,msgOpc3Hexa
+    mov ah,09h
+    int 21h
+ 
+    ; digito alto (4 bits mas significativos)
+    mov al,numero
+    mov cl,4
+    shr al,cl
+    xor ah,ah
+    mov si,ax
+    mov dl,VectorHexaDigitos[si]
+    mov ah,02h
+    int 21h
+ 
+    ; digito bajo (4 bits menos significativos)
+    mov al,numero
+    and al,0Fh
+    xor ah,ah
+    mov si,ax
+    mov dl,VectorHexaDigitos[si]
+    mov ah,02h
+    int 21h
+ 
+    ret                     ; regresa a mostrar_modulo y preguntar_continuar
+ 
+op3_error:
+ 
+    lea dx,msgOpc3Error
+    mov ah,09h
+    int 21h
+    jmp op3_pedir           ; vuelve a pedir el numero
+ 
+convertidor endp
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+;--------- FUNCIONAMIENTO DE SALIDA GENERAL ----------------------------------------------------------------
+
 preguntar_continuar proc
 
 preguntar:
@@ -504,4 +658,11 @@ salir proc
 
 salir endp
 
-END inicio
+
+
+END inicio     
+
+
+
+
+
