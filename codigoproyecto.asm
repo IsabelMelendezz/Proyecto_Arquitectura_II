@@ -63,23 +63,38 @@
     CANT_MAYUS DB 0
     CANT_MINUS DB 0
     CANT_NUMS DB 0
-    CANT_ESPEC DB 0   
+    CANT_ESPEC DB 0  
     
+    
+    ;---------------------------------
+    ; 2) VARIABLES DEL MODULO HAMMING
+    ;----------------------------------
+
+    msgHamming DB 10,13,'===== CODIGO HAMMING =====',10,13,'$'  
+    msgPedirH DB 10,13,'Ingrese 10 bits: $'
+    msgErrorH DB 10,13,'Error: ingrese exactamente 10 bits (0 y 1).',10,13,'$' 
+    msgResultadoH DB 10,13,10,13,'Codigo Hamming de 14 bits: $'
+    entradaH DB 11,0,11 DUP(0) 
+    codigoH DB 14 DUP(0) 
+      ;---------------- FIN VARIABLES MODULO 2 ----------------
      
-    ;----------------------------------------
-    ; VARIABLES DEL MODULO 3
-    ; Conversor de Bases Numéricas
-    ;----------------------------------------   
-    msgOpc3Titulo DB 10,13,'==================================================',10,13
-                  DB       '             CONVERSOR DE BASES NUMERICAS',10,13
-                  DB       '==================================================$'
-    msgOpc3Ingreso  DB 10,13,"Ingrese un decimal de 0 a 255: $"
-    msgOpc3Binario  DB 10,13, "Binario de 8 bits: $"  
-    msgOpc3Hexa     DB 10,13,'Hexadecimal (2 digitos): $'
-    msgOpc3Error    DB 10,13, "Solo se permite ingresar numeros del 0 al 255 $"
-    VectorHexaDigitos DB  '0123456789ABCDEF'
-    numero       DB 0  
-    Hexa         DB 0 
+    ;---------------- VARIABLES MODULO 3 ----------------
+
+    entradaD DB 4,0,4 DUP(0)
+    numero   DB 0
+    temporal DB 0
+    
+    binario  DB 8 DUP(0)
+    
+    hex1     DB 0
+    hex2     DB 0
+    
+    msgDecimal DB 10,13,"Ingrese un decimal de 0 a 255: $"
+    msgErrorD  DB 10,13,"Error: ingrese un numero entre 0 y 255.",10,13,"$"
+    msgBinario DB 10,13,"Binario de 8 bits: $"
+    msgHex     DB 10,13,"Hexadecimal de 2 digitos: $"  
+    
+    ;---------------- FIN VARIABLES MODULO 3 ----------------
 
 
 .CODE
@@ -221,10 +236,7 @@ modulo1:
 
 modulo2:
     ;aqui iria el call a hamming mio 
-    lea dx,bienvenida2
-    mov ah,09h
-    int 21h
-    ret
+    call hamming
 
 modulo3:
      ;aqui iria el call al conversor tuyo 
@@ -474,6 +486,204 @@ IMPRIMIR:
 
 imprimir_categoria endp
 
+;------------------- INICIO MODULO 2 HAMMING ---------------------------------------------
+
+    HAMMING PROC
+    
+        lea dx,msgHamming
+        mov ah,09h
+        int 21h
+    
+        lea dx,msgPedirH
+        mov ah,09h
+        int 21h
+    
+        ; Leo los 10 bits
+        lea dx,entradaH
+        mov ah,0Ah
+        int 21h
+    
+        ;verifico si si son 10
+        cmp entradaH[1],10
+        jne errorH
+    
+   
+        mov si,2
+        mov cx,10
+    
+validarH:
+
+        MOV AL, entradaH[SI]
+    
+        CMP AL, 30H
+        JB errorH
+    
+        CMP AL, 31H
+        JA errorH
+    
+        INC SI
+        LOOP validarH
+    
+        JMP guardar_datos
+        
+    
+    errorH:
+    
+        lea dx,msgErrorH
+        mov ah,09h
+        int 21h  
+        
+        ;pido otra vez 
+        lea dx,entradaH
+        mov ah,0Ah
+        int 21h
+    
+        ret
+    guardar_datos:    
+    ;guardo los bits que entren en sus respectivas posiciones evitando tocar los de paridad     
+    MOV SI, 2    ;inicio desde la posicion 2
+
+    MOV AL, entradaH[SI]  
+    ;ascii a numero
+    SUB AL, 30H
+    MOV codigoH[2], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]  
+    
+    SUB AL, 30H
+    MOV codigoH[4], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[5], AL
+    INC SI
+
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[6], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[8], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[9], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[10], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[11], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[12], AL
+    INC SI
+    
+    MOV AL, entradaH[SI]
+    SUB AL, 30H
+    MOV codigoH[13], AL 
+        
+    logica_hamming:
+    
+     ; PARIDAD 1
+
+    MOV AL, codigoH[2]
+    ADD AL, codigoH[4]
+    ADD AL, codigoH[6]
+    ADD AL, codigoH[8]
+    ADD AL, codigoH[10]
+    ADD AL, codigoH[12]
+    
+    MOV AH, 0
+    MOV BL, 2
+    DIV BL
+    
+    MOV codigoH[0], AH
+    
+      ;paridad 2
+      
+
+        MOV AL, codigoH[2]
+        ADD AL, codigoH[5]
+        ADD AL, codigoH[6]
+        ADD AL, codigoH[9]
+        ADD AL, codigoH[10]
+        ADD AL, codigoH[13]
+        
+        MOV AH, 0
+        MOV BL, 2
+        DIV BL
+        
+        MOV codigoH[1], AH
+      
+      ;paridad 3
+       
+       MOV AL, codigoH[4]
+       ADD AL, codigoH[5]
+       ADD AL, codigoH[6]
+       ADD AL, codigoH[11]
+       ADD AL, codigoH[12]
+       ADD AL, codigoH[13]
+      
+       MOV AH, 0
+       MOV BL, 2
+       DIV BL
+        
+       MOV codigoH[3], AH  
+       
+       
+        ; PARIDAD 4
+
+        MOV AL, codigoH[8]
+        ADD AL, codigoH[9]
+        ADD AL, codigoH[10]
+        ADD AL, codigoH[11]
+        ADD AL, codigoH[12]
+        ADD AL, codigoH[13]
+        
+        MOV AH, 0
+        MOV BL, 2
+        DIV BL
+        
+        MOV codigoH[7], AH    
+        
+        
+        LEA DX, msgResultadoH
+        MOV AH, 09H
+        INT 21H    
+        
+        
+        
+        MOV SI, 0
+        MOV CX, 14
+        
+        MOSTRAR_HAMMING:  
+ 
+         MOV DL, codigoH[SI]
+         ADD DL, 30H
+         MOV AH, 02H
+         INT 21H
+        
+         INC SI
+         LOOP MOSTRAR_HAMMING 
+         
+         jmp repetir_modulo
+     
+    HAMMING ENDP
+
+
+; -----------------------------------AQUI TERMINA HAMMMIGN MODULO 2   -------------------------------------------------
 
 
 
@@ -481,131 +691,208 @@ imprimir_categoria endp
 ;------- MODULO 3 -----------------------------------------------------------------------------------
 
 
+convertidor PROC
 
 
-convertidor proc
- 
-    ; MOSTRAR TITULO
- 
-    lea dx,msgOpc3Titulo
+pedirD:
+
+    lea dx,msgDecimal
     mov ah,09h
     int 21h
+
  
-op3_pedir:
- 
-    lea dx,msgOpc3Ingreso
-    mov ah,09h
+    lea dx,entradaD
+    mov ah,0Ah
     int 21h
- 
-    xor bx,bx               ;bx para acumular el numero
-    xor si,si               ;si para los digitos que lee
- 
-op3_leer:
- 
-    mov ah,01h
-    int 21h
- 
-    cmp al,13               ; Enter
-    je  op3_fin_lectura
- 
-    cmp al,'0'
-    jb  op3_error
-    cmp al,'9'
-    ja  op3_error
- 
-    sub al,30h              ; ASCII a valor
-    xor ah,ah
-    mov cx,ax               ; cx para el nuevo digito
- 
-    mov ax,bx               ; ax = acumulado * 10 + digito
-    mov dx,10
-    mul dx
-    add ax,cx
- 
-    cmp ax,255              ; validar rango 0-255
-    ja  op3_error
- 
-    mov bx,ax
+
+    ; Verifico que no este vacio
+    cmp entradaD[1],0
+    je errorD
+
+    ; Verifico que tenga maximo 3 digitos
+    cmp entradaD[1],3
+    ja errorD
+
+
+    ;---------------- VALIDAR LOS CARACTERES ----------------
+
+    mov si,2
+    mov cl,entradaD[1]
+    mov ch,0
+
+validarD:
+
+    mov al,entradaD[si]
+
+    cmp al,30h
+    jb errorD
+
+    cmp al,39h
+    ja errorD
+
     inc si
- 
-    cmp si,3                ; maximo 3 digitos
-    jb  op3_leer
- 
-op3_fin_lectura:
- 
-    cmp si,0                ; si no escribio nada, error
-    je  op3_error
- 
-    mov numero,bl           ; guardar el valor (0-255 cabe en 8 bits)
- 
-    ;---------------- BINARIO (8 bits) ----------------
- 
-    lea dx,msgOpc3Binario
-    mov ah,09h
-    int 21h
- 
-    mov bl,numero
+    loop validarD
+
+
+    ;---------------- CONVERTIR ASCII A DECIMAL ----------------
+
+    mov numero,0
+    mov si,2 
+    ;estos dos se hacen en combo para usar el contador Cx del loop
+    mov cl,entradaD[1]
+    mov ch,0
+
+convertirDecimal:
+
+    ; Multiplicar el numero acumulado por 10
+    mov al,numero
+    mov bl,10
+    mul bl
+    ; Obtener el siguiente digito
+    mov dl,entradaD[si]
+    sub dl,30h
+    mov dh,0
+
+    ; Sumar el nuevo digito
+    add ax,dx
+
+    ; Verificar que no supere 255
+    cmp ax,255
+    ja errorD
+
+    mov numero,al
+
+    inc si
+    loop convertirDecimal
+
+
+    ;---------------- CONVERSION A BINARIO ----------------
+
+    mov al,numero    ;pmi numero original que ya volvi decimal
+    mov temporal,al  ;para guardar el cociente
+
+    mov si,0 ;desla posicion 0 del arreglo
     mov cx,8
- 
-op3_bits:
- 
-    shl bl,1                ; el bit sale hacia el carry
-    jc  op3_uno
-    mov dl,'0'
-    jmp op3_imprimir_bit
- 
-op3_uno:
- 
-    mov dl,'1'
- 
-op3_imprimir_bit:
- 
-    mov ah,02h
-    int 21h
-    loop op3_bits
- 
-    ;---------------- HEXADECIMAL (2 digitos) ----------------
- 
-    lea dx,msgOpc3Hexa
+
+convertirBinario:
+
+    mov al,temporal
+    mov ah,0 
+    
+    mov bl,2
+    div bl
+
+    ; Guardar el residuo
+    mov binario[si],ah       ;fraccion
+
+    ; Guardar el cociente
+    mov temporal,al  ;numero grande
+
+    inc si
+    loop convertirBinario
+
+
+    ;---------------- MOSTRAR BINARIO ----------------
+
+    lea dx,msgBinario
     mov ah,09h
     int 21h
- 
-    ; digito alto (4 bits mas significativos)
-    mov al,numero
-    mov cl,4
-    shr al,cl
-    xor ah,ah
-    mov si,ax
-    mov dl,VectorHexaDigitos[si]
+
+    ;aqui lo hago al reves para mostrar los numeros
+    mov si,7
+    mov cx,8
+
+mostrarBinario:
+
+    mov dl,binario[si]
+    add dl,30h
     mov ah,02h
     int 21h
- 
-    ; digito bajo (4 bits menos significativos)
+
+    dec si
+    loop mostrarBinario
+
+
+    ;---------------- CONVERSION A HEXADECIMAL ----------------
+
     mov al,numero
-    and al,0Fh
-    xor ah,ah
-    mov si,ax
-    mov dl,VectorHexaDigitos[si]
-    mov ah,02h
-    int 21h
- 
-    ret                     ; regresa a mostrar_modulo y preguntar_continuar
- 
-op3_error:
- 
-    lea dx,msgOpc3Error
+    mov ah,0
+    mov bl,16
+    div bl
+
+    ; Guardar cociente y residuo
+    mov hex1,al
+    mov hex2,ah
+
+
+    ;---------------- MOSTRAR HEXADECIMAL ----------------
+
+    lea dx,msgHex
     mov ah,09h
     int 21h
-    jmp op3_pedir           ; vuelve a pedir el numero
- 
-convertidor endp
 
 
+    ; aqui valido 
+
+    mov dl,hex1
+    
+    ;si en hex es de 0-9
+    cmp dl,9
+    jbe primerNumero
+
+     
+    ;si en hex es de 10-15  
+    add dl,37h
+    jmp mostrarPrimer
+
+primerNumero:
+
+    add dl,30h
+
+mostrarPrimer:
+
+    mov ah,02h
+    int 21h
 
 
+    ; Mostrar segundo digito lo mismo
+      
+      
+    ;si en hex es de 0-9
+    mov dl,hex2
+    cmp dl,9
+    jbe segundoNumero
+
+     ;si en hex es de 10-15
+    add dl,37h
+    jmp mostrarSegundo
+
+segundoNumero:
+
+    add dl,30h
+
+mostrarSegundo:
+
+    mov ah,02h
+    int 21h
+
+    ret
 
 
+    ;---------------- MENSAJE DE ERROR ----------------
 
+errorD:
+
+    lea dx,msgErrorD
+    mov ah,09h
+    int 21h
+
+    jmp pedirD
+
+
+convertidor ENDP
+
+;------------------- FIN MODULO 3 CONVERSOR DE BASES -----------------------------
 
 
 
