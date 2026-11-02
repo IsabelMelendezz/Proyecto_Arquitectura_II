@@ -97,6 +97,35 @@
     ;---------------- FIN VARIABLES MODULO 3 ----------------
 
 
+    ;----------------------------------------
+    ; VARIABLES DEL MODULO 4
+    ; Juego Interactivo de Aritmética por Mouse (3 Niveles / 12 Preguntas)
+    ;----------------------------------------   
+    msgOpc4Titulo DB 10,13,'==================================================',10,13
+                  DB       '             Juego "Math Quiz Click" ',10,13   
+                  DB       '             Seleccione un nivel" ',10,13
+                  DB       '==================================================$',10,13
+                  DB ,10,13,10,13,"1. Nivel 1 (Facil)"
+                  DB "        2. Nivel 2 (Medio)"
+                  DB "             3. Nivel 3 (Avanzado)" ,10,13,10,13,10,13
+                  DB "===============================================================================$"
+ msgOpc4Titulo1 DB "Nivel (Facil)"
+             DB ,10,13,"Sumas y restas con operandos de 1 dígito (0-9)",10,13,"$"  
+msgOpc4Titulo2 DB "Nivel (Medio)"
+             DB ,10,13,"Sumas, restas y multiplicaciones con operandos de hasta 2 dígitos (0-50)",10,13,"$"
+msgOpc4Titulo3 DB "Nivel (Dificil)"
+             DB ,10,13,"Operaciones compuestas/combinadas o multiplicación/división con resultados hasta 255",10,13,"$"
+    Puntaje  db 0         
+    Pregunta1 DB "8 - 5= ?$"
+    Resul1     DB "[ (A) 2 ]     [ (B) 3 ]     [ (C) 4 ] $"       ;Correcta 3
+    Pregunta2 DB "37 + 48 = ?$"
+    Resul2    DB "[ (A) 85 ]     [ (B) 16 ]     [ (C) 48 ] $"     ;Correcta 85
+    Pregunta3 DB "8 x 5 - 12 = ?$"
+    Resul3     DB "[ (A) 180 ]     [ (B) 28 ]     [ (C) 30 ] $"   ;Correcta 28
+
+
+
+
 .CODE
 
 
@@ -894,9 +923,17 @@ convertidor ENDP
 
 ;------------------- FIN MODULO 3 CONVERSOR DE BASES -----------------------------
 
+ 
+;------- MODULO 4 -----------------------------------------------------------------------------------
+ juego proc
 
 
 
+
+ juego endp
+ 
+
+;------------------- FIN MODULO 4 JUEGO -----------------------------   
 
 
 
