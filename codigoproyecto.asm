@@ -1,3 +1,4 @@
+
 .model small
 .stack 100h
 
@@ -39,7 +40,7 @@
                DB '             CLASIFICADOR DE CARACTERES',13,10
                DB '==================================================$'
 
-    MSJ_PEDIR DB 13,10,'Ingrese exactamente 19 caracteres: $'
+    MSJ_PEDIR DB 13,10,'Ingrese exactamente 50 caracteres: $'
 
     MSJ_RESULT DB 13,10,13,10,'--- RESUMEN DE CLASIFICACION ---$'
 
@@ -628,10 +629,11 @@ validarH:
         mov ah,09h
         int 21h  
         
-        ;pido otra vez 
-        lea dx,entradaH
-        mov ah,0Ah
-        int 21h
+        call hamming
+        
+        jmp guardar_datos
+        jmp logica_hamming 
+        
     
         ret
     guardar_datos:    
@@ -1177,7 +1179,7 @@ J_X_MIN    equ 24          ; columna 3: numero de la opcion
     mov ax,0003h
     int 33h                     ; BX = botones, CX = X, DX = Y
 
-    test bx,1                   
+    test bx,1                    ;CLIC IZQUIERDO
     jz  juego_pausa
 
     cmp cx,J_X_MIN
