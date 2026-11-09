@@ -991,7 +991,7 @@ convertidor ENDP
 
  
 ;------- MODULO 4 -----------------------------------------------------------------------------------
-J_X_MIN    equ 24          ; columna 3: numero de la opcion
+ J_X_MIN    equ 24          ; columna 3: numero de la opcion
  J_Y_MIN    equ 16
  J_Y_OP1    equ 23
  J_Y_OP2    equ 31
@@ -1027,24 +1027,26 @@ J_X_MIN    equ 24          ; columna 3: numero de la opcion
     jmp  juego_pedir                 ; tecla invalida: volver a preguntar
 
  juego_elige1:
-    mov totalPreg,12            ; niveles 1 + 2 + 3
+    mov totalPreg,12            ;cantidad de preguntas para el nivel 1 (12)
     jmp  juego_mouse
  juego_elige2:
-    mov totalPreg,8             ; niveles 2 + 3
+    mov totalPreg,12             ;cantidad de preguntas para el nivel 2 (12)
     jmp  juego_mouse
  juego_elige3:
-    mov totalPreg,4             ; solo nivel 3
+    mov totalPreg,12             ;cantidad de preguntas para el nivel 3 (12)
 
  juego_mouse:                   ; inicializar mouse 
     mov ax,0000h
     int 33h
     cmp ax,0000h
     jne  juego_mouse_ok
-    ret
+    ret             
+    
+    ;Aquí determinamos desde qué nivel debe comenzar
  juego_mouse_ok:
     cmp totalPreg,12
     je  juego_nivel1
-    cmp totalPreg,8
+    cmp totalPreg,12
     je  juego_nivel2
     jmp juego_nivel3
 
@@ -1054,8 +1056,8 @@ J_X_MIN    equ 24          ; columna 3: numero de la opcion
  juego_nivel1:
 
     lea si,Nivel1p1
-    mov bl,3
-    mov di,juego_ANCHO_2D
+    mov bl,3 ;opcion correcta
+    mov di,juego_ANCHO_1D
     call  juego_pregunta
 
     lea si,Nivel1p2
@@ -1065,7 +1067,7 @@ J_X_MIN    equ 24          ; columna 3: numero de la opcion
 
     lea si,Nivel1p3
     mov bl,1
-    mov di, juego_ANCHO_2D
+    mov di, juego_ANCHO_1D
     call  juego_pregunta
 
     lea si,Nivel1p4
